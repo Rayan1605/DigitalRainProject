@@ -3,4 +3,6 @@ project(DigitalRainProject)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(DigitalRainProject main.cpp)
+add_executable(DigitalRainProject main.cpp
+        Drawing.cpp
+        Drawing.h)
