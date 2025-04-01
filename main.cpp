@@ -1,22 +1,9 @@
-#include <iostream>
-#include <windows.h>
-int main() {
- HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (console== INVALID_HANDLE_VALUE)
-    {
-        std::cerr << "Error while getting console handle" << std::endl;
-        return 1;
-    }
+#include "RainDrop.h"
 
-    SetConsoleTextAttribute(console, FOREGROUND_RED | FOREGROUND_INTENSITY);
-    std::cout<<"Hello, "<<std::endl;
 
-    SetConsoleTextAttribute(console, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    std::cout<<"World!"<<std::endl;
-
-    SetConsoleTextAttribute(console, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-    std::cout<<"This is Blue!"<<std::endl;
-
+int main()
+{
+    RainDrop::Program::Main();
     return 0;
 }
 

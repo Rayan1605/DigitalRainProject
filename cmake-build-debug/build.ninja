@@ -55,8 +55,8 @@ build CMakeFiles/DigitalRainProject.dir/main.cpp.obj: CXX_COMPILER__DigitalRainP
   OBJECT_DIR = CMakeFiles\DigitalRainProject.dir
   OBJECT_FILE_DIR = CMakeFiles\DigitalRainProject.dir
 
-build CMakeFiles/DigitalRainProject.dir/Drawing.cpp.obj: CXX_COMPILER__DigitalRainProject_unscanned_Debug C$:/Users/rayan/CLionProjects/DigitalRainProject/Drawing.cpp || cmake_object_order_depends_target_DigitalRainProject
-  DEP_FILE = CMakeFiles\DigitalRainProject.dir\Drawing.cpp.obj.d
+build CMakeFiles/DigitalRainProject.dir/RainDrop.cpp.obj: CXX_COMPILER__DigitalRainProject_unscanned_Debug C$:/Users/rayan/CLionProjects/DigitalRainProject/RainDrop.cpp || cmake_object_order_depends_target_DigitalRainProject
+  DEP_FILE = CMakeFiles\DigitalRainProject.dir\RainDrop.cpp.obj.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\DigitalRainProject.dir
   OBJECT_FILE_DIR = CMakeFiles\DigitalRainProject.dir
@@ -69,7 +69,7 @@ build CMakeFiles/DigitalRainProject.dir/Drawing.cpp.obj: CXX_COMPILER__DigitalRa
 #############################################
 # Link the executable DigitalRainProject.exe
 
-build DigitalRainProject.exe: CXX_EXECUTABLE_LINKER__DigitalRainProject_Debug CMakeFiles/DigitalRainProject.dir/main.cpp.obj CMakeFiles/DigitalRainProject.dir/Drawing.cpp.obj
+build DigitalRainProject.exe: CXX_EXECUTABLE_LINKER__DigitalRainProject_Debug CMakeFiles/DigitalRainProject.dir/main.cpp.obj CMakeFiles/DigitalRainProject.dir/RainDrop.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\DigitalRainProject.dir
