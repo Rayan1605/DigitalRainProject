@@ -24,126 +24,132 @@ I wrote some basic tests to check that the main functions behave as expected:
 - **Initialize** – confirms the screen size is set correctly and columns are initialized.
 - **ColumnUpdate** – ensures streams update properly and don’t exceed their limits.
 
-#### 📌 Code Insight: `YPositionFields`
-
-```cpp
-int Program::YPositionFields(int y, int height) {
-    return (y + height) % height;
-}
-```
-
-This wraps any Y-position that goes out of bounds. If a stream moves past the bottom of the screen, this line makes sure it starts again from the top, preventing visual glitches and allowing an infinite fall loop.
-
-#### 📌 Code Insight: `getAsciiCharacters`
-
-```cpp
-char Program::getAsciiCharacters() {
-    int t = randomPosition() % 10;
-    if (t <= 2) return '0' + (randomPosition() % 10);
-    else if (t <= 4) return 'a' + (randomPosition() % 26);
-    else if (t <= 6) return 'A' + (randomPosition() % 26);
-    else return static_cast<char>(randomPosition() % (255 - 32) + 32);
-}
-```
-
-Rather than returning fully random characters, this function skews toward digits and letters to give the rain a more readable, Matrix-style vibe.
+I kept the tests simple and direct, just enough to make sure nothing breaks when I change stuff. Because a lot of the visual output relies on randomness and real-time rendering, most of the testing still had to be done manually.
 
 ### Manual Testing
 
-Since this project is visual, I tested it by running it directly and observing the output. I focused on:
+Since this project is visual, I tested it by running it and just watching how it looked. I played around with:
 
-- How smooth and natural the falling effect looked.
-- Running the program in different console sizes to check formatting.
-- Adjusting delay, character spacing, and update logic to balance performance and visual quality.
+- How the characters flowed — if the motion felt clean and natural.
+- Different window sizes — making sure resizing didn’t break it.
+- Delay, stream length, and how often new characters show up — to balance CPU usage and how it looks.
 
 ---
 
 ## 🛠️ How It’s Designed
 
-At first, the animation was very flickery and didn’t look great. I learned about **double buffering** using the Windows Console API, which completely fixed the issue. Double buffering uses two console screen buffers: one that's visible (active), and one in the background (inactive). The program draws the next frame in the inactive buffer and then swaps it in — this prevents flickering and makes the animation smooth.
+The first version I had was super flickery. Like, unwatchable levels of flicker. Then I found out about this thing called double buffering in the Windows Console API. Basically, instead of drawing directly to the visible screen, you draw everything to a hidden screen buffer, and then swap it in when it’s ready. This makes it way smoother.
 
-### 📌 Code Insight: Double Buffer Setup
+So I had to manually set up the screen size, control cursor movement, and make sure all drawing happened inside bounds. Like, if the console is 120 wide, the furthest I can draw to is position 119, not 120. Otherwise, it’ll throw off the whole frame.
 
-```cpp
-HANDLE hConsole = CreateConsoleScreenBuffer(...);
-SetConsoleActiveScreenBuffer(hConsole);
-```
-
-One buffer is used to draw the next frame while the other is visible. Swapping them after drawing removes flicker and creates a seamless animation.
-
-I also had to set things up using Windows-specific functions. That includes setting the screen size, configuring buffer access, and making sure columns stay within bounds. For example, if the screen is 120 characters wide, you use positions 0–119 (not 0–120) to avoid going out of range.
-
-When creating the columns, I start them above the top of the screen (like at -10) so they fall into view instead of just appearing. For each frame, the program moves the cursor to the right spot, sets the text color, and prints the character. The top of the stream is a brighter green, while the rest are dimmer — just like in the original Matrix effect. After drawing everything, the program swaps the buffers, and the next frame begins.
+When setting up the streams, I make sure they start above the screen (like -10 or something), so they fall in gradually instead of just popping up in the middle. And the top of each stream is brighter, then it fades — like in the movie.
 
 ---
 
-## ⚙️ Algorithm
+## ⚙️ Algorithm 
 
-The digital rain effect is created using a simple but well-structured update loop that simulates falling characters. Each column is treated as an independent vertical stream, made up of a list of characters with assigned Y-positions. By updating these columns frame by frame and drawing them to the console using the Windows API, the animation achieves a natural, smooth rain-like motion.
+This section goes over how the actual effect works. The algorithm is simple at first glance, but there’s a lot of little things you need to get right to make it feel good.
 
-### 1. Initialization
+### 1. Setting up the streams
 
-At the start, the program resizes the console window and buffer using Windows-specific functions. Two screen buffers are created — one for display and one for drawing — enabling double buffering to eliminate flickering. Columns are then initialized with random lengths and starting positions to avoid uniform movement. Each column is stored as a vector of character and position pairs:
+Each stream is a column of characters. Each column is a `std::vector` of pairs. Each pair holds a char and its Y-position. The whole screen is just a list of these columns.
 
 ```cpp
 std::vector<std::vector<std::pair<char, int>>> streams;
 ```
 
-### 2. Column Representation and Movement
-
-Each column acts as its own stream, where:
-
-- The top of the column holds the newest character.
-- Characters are moved down one position every frame.
-- When a character reaches the bottom, it wraps back to the top using `YPositionFields()`.
-- New characters are added at the top with a certain probability.
-- If a column becomes too long (beyond `height / 4`), excess characters are removed to maintain performance and visual consistency.
-
-### 3. Drawing and Updating the Frame
-
-For each frame:
-
-- The last character in the column is cleared from the console.
-- All character positions are updated.
-- A new character may be inserted at the top.
-- Console colors are set: the leading character is bright green, and the rest fade to darker shades.
+During `Initialize()`, I resize the window, set the buffer size, and loop through all columns like this:
 
 ```cpp
-if (i == 0) SetConsoleTextAttribute(hConsole, greenColor);
-else if (i == streams[x].size() - 1) SetConsoleTextAttribute(hConsole, fadedColor);
-else SetConsoleTextAttribute(hConsole, baseColor);
+for (int x = 0; x < width; ++x) {
+    int startY = randomPosition() % height;
+    int initialLength = (randomPosition() % (height / 3)) + 3;
+    for (int i = 0; i < initialLength; ++i) {
+        int yPos = YPositionFields(startY - i, height);
+        streams[x].push_back({ getAsciiCharacters(), yPos });
+    }
+}
 ```
 
-The updated positions are then drawn using cursor movement and character output functions. After the entire frame is drawn, the screen buffers are swapped to show the new frame instantly, creating a clean, flicker-free visual.
+So each column starts with a few characters at different heights, all falling independently.
 
-### 4. Continuous Animation Loop
+---
+
+### 2. Updating Streams (Frame by Frame)
+
+Each frame, I loop through all columns and update them. I shuffle the order just for variation.
+
+```cpp
+std::shuffle(columns.begin(), columns.end(), randomPosition);
+```
+
+For each column:
+
+- I clear the last character from the screen
+- I move all characters down by 1
+- I sometimes add a new character at the top (not always, for randomness)
+- If the stream is too long, I trim it
+
+```cpp
+if ((randomPosition() % 100) < 70 && streams[x].size() < maxLength) {
+    int newY = YPositionFields(streams[x][0].second - 1, height);
+    streams[x].insert(streams[x].begin(), { getAsciiCharacters(), newY });
+}
+while (streams[x].size() > maxLength) {
+    streams[x].pop_back();
+}
+```
+
+That 70% chance is what makes the rain feel alive. If every column updated every frame, it would look robotic.
+
+---
+
+### 3. Drawing the Frame
+
+Once I’ve updated all columns, I draw them. I use color to separate the stream head from the body.
+
+```cpp
+if (i == 0)
+    SetConsoleTextAttribute(hConsole, greenColor); // Head (bright)
+else if (i == streams[x].size() - 1)
+    SetConsoleTextAttribute(hConsole, fadedColor); // Tail (dim)
+else
+    SetConsoleTextAttribute(hConsole, baseColor); // Body (normal green)
+```
+
+After setting the color, I move the cursor and print the character at its Y-position.
+
+The top of the stream is brighter to make it stand out, and the tail fades out so it feels like it disappears smoothly.
+
+---
+
+### 4. Looping the Animation
+
+Everything above runs inside a never-ending loop:
 
 ```cpp
 while (true) {
     ColumnUpdate(width, height, streams);
-    Sleep(50); // Control animation speed
+    Sleep(50); // delay to control speed
 }
 ```
 
-Each column updates independently, which makes the animation feel more alive. Combined with the controlled randomness in character generation, the result is a visual that feels fluid and organic.
+And yeah, this loop runs forever. `Sleep(50)` gives it a nice pacing — fast enough to be fluid, but slow enough to be readable.
 
 ---
 
 ## 🧠 Modern C++ Insight & Reflection
 
-This project gave me a solid chance to explore and apply some key features of modern C++. One of the main things I focused on was writing code that’s clean, modular, and easy to maintain — even in a visual, console-based project like this.
+Honestly, I learned a lot just from building this.
 
-Here are a few things I made good use of:
-
-- **STL Containers** – I used `std::vector` and `std::pair` heavily to manage columns and character positions in a flexible and dynamic way.
-- **Random Number Generation** – I worked with the `<random>` library and `std::mt19937` to create more natural and varied behavior in the character streams.
-- **Modular File Structure** – The project is broken into multiple files for clarity — separating testing, logic, and declarations helped keep things readable and organized.
-- **Windows API Integration** – I learned how to directly interact with the console using the Windows API — for cursor movement, color output, and double buffering — which was new territory for me.
+- **Vectors and pairs**: Using vectors of `pair<char, int>` was the cleanest way I could think of to track stream characters and their Y-positions together.
+- **Randomness**: I used `<random>` and `std::mt19937` instead of `rand()` so the character generation looked less repetitive and felt more “natural”.
+- **Multifile project**: Splitting the code into separate header/source files and test files made everything more manageable.
+- **System-level stuff**: Working with the Windows Console API was kinda like diving into the guts of how terminal output works. Cursor positioning, screen size, buffer control — all stuff I’d never touched before.
 
 ---
 
 ## ✅ Conclusion
 
-This wasn’t just a fun effect to recreate — it was a hands-on challenge in low-level rendering, randomness design, and system control. I learned how to control visual output precisely in a console window, while keeping the code organized and testable using modern C++ practices. From figuring out double buffering to building a reusable animation loop, every part of this project helped me grow as a developer.
-
+It taught me how visual feedback is all about detail — like timing, randomness, and subtle effects like brightness or spacing. I had to think about how the console behaves, not just how my logic works. In the end, I think I got it to a point where it actually *feels* like digital rain.
 
