@@ -36,8 +36,7 @@ Since this project is visual, I tested it by running it directly and observing t
 
 ---
 
-## 🛠️ How It’s Designed (Explained Simply)
-
+## 🛠️ How It’s Designed
 At first, the animation was very flickery and didn’t look great. I learned about **double buffering** using the Windows Console API, which completely fixed the issue. Double buffering uses two console screen buffers: one that's visible (active), and one in the background (inactive). The program draws the next frame in the inactive buffer and then swaps it in — this prevents flickering and makes the animation smooth.
 
 I also had to set things up using Windows-specific functions. That includes setting the screen size, configuring buffer access, and making sure columns stay within bounds. For example, if the screen is 120 characters wide, you use positions 0–119 (not 0–120) to avoid going out of range.
