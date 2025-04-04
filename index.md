@@ -12,7 +12,12 @@ This is my C++ GitHub Pages project powered by **Jekyll**.
 The goal of this console application is to recreate the iconic “digital rain” effect from *The Matrix*. It uses the Windows Console API to simulate streams of random characters falling from the top of the screen, with real-time updates to cursor position and text color. The project is organized into multiple files, with a focus on clean structure, modular design, and readable code. I also included a simple test suite to make sure each part of the program works correctly.
 
 ---
+## 🎥 Demo
 
+<video controls autoplay muted loop playsinline width="720">
+  <source src="https://raw.githubusercontent.com/Rayan1605/DigitalRainProject/master/digital_rain_demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video> 
 ## 🧪 Testing Strategy
 
 ### Unit Testing
