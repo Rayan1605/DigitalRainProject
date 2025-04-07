@@ -183,9 +183,9 @@ This ensures that no vector operation is attempted on an empty container, elimin
 
 ### 🤔 Lessons Learned
 
-- **Safety-first access**: Even in a controlled update cycle, randomness introduces volatility. Always validate vector size before accessing elements, especially in real-time systems.
-- **Edge cases matter**: This was not a constant issue—it occurred unpredictably due to a rare condition triggered by timing and probabilistic behavior. Guarding against edge cases is essential for robust design.
-- **Assertions are helpful**: While abrupt, runtime assertions like this are invaluable during development. They expose assumptions in your logic that may not hold under all execution paths.
+- **Safety-first access**: Always check before accessing: Even if your program runs in a controlled way, unexpected things can still happen. Always check the size of a list or vector before trying to access something inside it—especially in systems that run in real time. 
+- **Edge cases matter**: Edge cases are important: This bug didn’t happen all the time. It showed up randomly because of rare timing issues. That’s why it’s important to protect your code against unusual situations, even if they don’t seem likely
+- **Assertions are helpful**: Use assertions during development: Assertions can stop your program suddenly, but they’re useful when building your code. They help you find wrong assumptions in your logic before they become real problems later.
 
 ### ✅ Conclusion
 
