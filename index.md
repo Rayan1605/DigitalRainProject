@@ -142,6 +142,93 @@ while (true) {
 And yeah, this loop runs forever. `Sleep(50)` gives it a nice pacing — fast enough to be fluid, but slow enough to be readable.
 
 ---
+## 🧩 Problem-Solving
+
+### 🧨 Runtime Crash: vector subscript out of range
+
+While running the application during one of the animation cycles, I encountered a runtime crash triggered by a standard library assertion:
+
+> **Debug Assertion Failed!**  
+> Expression: `vector subscript out of range`  
+> File: vector  
+> Line: 1916
+
+This error typically occurs when attempting to access an index in a `std::vector` that is outside its valid range — in this case, it was due to referencing `streams[idx][0]` without verifying whether the `streams[idx]` vector was non-empty.
+
+### 🧪 Root Cause Analysis
+
+The problematic line was inside the stream update logic:
+
+```cpp
+int newY = YPositionFields(streams[idx][0].second - 1, height);
+streams[idx].insert(streams[idx].begin(), { getAsciiCharacters(), newY });
+```
+
+This code assumes that `streams[idx]` will always contain at least one element. However, due to the way the animation system trims columns and controls growth probabilistically (with a 70% chance of extension), it's entirely possible for a stream to be emptied out before this code executes.
+
+Since `streams[idx]` was not checked for emptiness before accessing `[0]`, the program attempted to dereference an invalid index, resulting in the crash.
+
+### 🛠️ Resolution
+
+To prevent this, I introduced a simple but critical conditional check to verify that the stream is non-empty before accessing the head of the column:
+
+```cpp
+if (!streams[idx].empty() && (randomPosition() % 100) < 70 && streams[idx].size() < maxLength) {
+    int newY = YPositionFields(streams[idx][0].second - 1, height);
+    streams[idx].insert(streams[idx].begin(), { getAsciiCharacters(), newY });
+}
+```
+
+This ensures that no vector operation is attempted on an empty container, eliminating the possibility of an out-of-bounds access.
+
+### 🤔 Lessons Learned
+
+- **Safety-first access**: Even in a controlled update cycle, randomness introduces volatility. Always validate vector size before accessing elements, especially in real-time systems.
+- **Edge cases matter**: This was not a constant issue—it occurred unpredictably due to a rare condition triggered by timing and probabilistic behavior. Guarding against edge cases is essential for robust design.
+- **Assertions are helpful**: While abrupt, runtime assertions like this are invaluable during development. They expose assumptions in your logic that may not hold under all execution paths.
+
+### ✅ Conclusion
+
+This experience reinforced the importance of defensive programming, particularly when dealing with animation systems that rely on randomness and continuous state updates. A single unchecked assumption—however unlikely—can compromise the stability of the entire application.
+
+By introducing a simple condition, I resolved the issue and made the system significantly more reliable. It’s a small change with a big impact, and a good reminder that resilience often lies in the details.
+
+
+### 💥 Console Glitch & What Caused It
+
+At one point, instead of the smooth Matrix-style rain I was aiming for, the console output completely broke. Characters were flying across the screen, overlapping, and appearing in places they weren’t supposed to. It didn’t look like digital rain — it looked like a visual mess.
+
+At first, I assumed the problem was in the animation logic. I double-checked the update loop, the character generator, and the randomness. But everything seemed fine.
+
+### 💡 What Actually Broke
+
+The real issue wasn’t the logic — it was the console itself.
+
+I was drawing characters **outside the valid screen area**. For example, if the console is 120 columns wide, drawing at column `120` (instead of `0–119`) is out of bounds. That causes the Windows Console to scroll, wrap, or glitch. On top of that, I hadn’t set the window and buffer sizes manually, so the console behavior was unpredictable.
+
+### 🔧 The Fix
+
+To stop that from happening, I explicitly set both the **window size** and the **screen buffer size** so they matched:
+
+```cpp
+SMALL_RECT windowSize = { 0, 0, 119, 29 };
+SetConsoleWindowInfo(hConsole, TRUE, &windowSize);
+
+COORD bufferSize = { 120, 30 };
+SetConsoleScreenBufferSize(hConsole, bufferSize);
+```
+
+Once that was in place, everything worked. No more flickering, no more random glitches — just clean, consistent animation.
+
+### ✅ What I Learned
+
+- Always define your console window and buffer sizes — never rely on system defaults.
+- The Windows Console won’t stop you from drawing out of bounds — but it will break if you do.
+- Even tiny oversights, like writing to column 120 instead of 119, can completely throw off your output.
+
+This bug taught me a lot about how the console works under the hood. Once I fixed it, the visual flow finally looked stable and intentional — exactly what I was going for.
+
+
 
 ## 🧠 Modern C++ Insight & Reflection
 
