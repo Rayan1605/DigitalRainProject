@@ -196,6 +196,9 @@ By introducing a simple condition, I resolved the issue and made the system sign
 
 ### 💥 Console Glitch & What Caused It
 
+![glitch](https://github.com/user-attachments/assets/ad958e17-ade7-4b56-beae-f1c024676cf3)
+
+
 At one point, instead of the smooth Matrix-style rain I was aiming for, the console output completely broke. Characters were flying across the screen, overlapping, and appearing in places they weren’t supposed to. It didn’t look like digital rain — it looked like a visual mess.
 
 At first, I assumed the problem was in the animation logic. I double-checked the update loop, the character generator, and the randomness. But everything seemed fine.
