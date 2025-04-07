@@ -144,6 +144,9 @@ And yeah, this loop runs forever. `Sleep(50)` gives it a nice pacing — fast en
 ---
 ## 🧩 Problem-Solving
 
+![error2](https://github.com/user-attachments/assets/bc32d220-84be-493c-a21b-1c18a1cd01f8)
+
+
 ### 🧨 Runtime Crash: vector subscript out of range
 
 While running the application during one of the animation cycles, I encountered a runtime crash triggered by a standard library assertion:
